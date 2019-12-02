@@ -17,17 +17,15 @@ const morganOption = (NODE_ENV === 'production')
 app.use(morgan(morganOption))
 app.use(helmet())
 app.use(cors())
-app.use(express.json());
 
 app.use(validateBearerToken)
 
 
-app.get('/', (req, res) => {
+app.use(bookmarkRouter)
+
+app.get('/api/', (req, res) => {
    res.send('Hello, world!')
  })
-
-
-app.use(bookmarkRouter)
 
 
 app.use(function errorHandler(error, req, res, next) {
