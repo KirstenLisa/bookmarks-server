@@ -5,6 +5,7 @@ const xss = require('xss')
 const logger = require('../src/logger')
 const { bookmarks } = require('../src/store')
 const BookmarksService = require('./bookmarks-service')
+const { getBookmarkValidationError } = require('./bookmark-validator')
 
 const bookmarkRouter = express.Router()
 const bodyParser = express.json();
@@ -103,5 +104,33 @@ bookmarkRouter
     })
     .catch(next)
 })
+
+.patch(bodyParser, (req, res, next) => {
+  const { title, url, description, rating } = req.body
+  const bookmarkToUpdate = { title, url, description, rating }
+
+  const numberOfValues = Object.values(bookmarkToUpdate).filter(Boolean).length
+  if (numberOfValues === 0) {
+    return res.status(400).json({
+       error: {
+         message: `Request body must contain either 'title', 'url', 'description' or 'rating'`
+      }
+    })
+  }
+  const error = getBookmarkValidationError(bookmarkToUpdate)
+
+  if (error) return res.status(400).send(error)
+
+  BookmarksService.updateBookmark(
+    req.app.get('db'),
+    req.params.bookmark_id,
+    bookmarkToUpdate
+  )
+    .then(numRowsAffected => {
+      res.status(204).end()
+    })
+    .catch(next)
+    
+   })
 
 module.exports = bookmarkRouter
